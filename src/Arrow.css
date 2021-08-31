@@ -1,0 +1,30 @@
+.scrollarrow {
+    position: relative;
+    margin: auto;
+    width: 25px;
+    margin: 0px;
+}
+
+.scrollarrow a {
+    cursor: pointer;
+}
+
+.scrollarrow span {
+    display: block;
+    opacity: 0;
+    width: 20px;
+    height: 20px;
+    border-bottom: 1px solid #ffffff;
+    border-right: 1px solid #ffffff;
+    transform: rotate(45deg);
+    animation: arrowAnimation 2.1s infinite;
+}
+
+.scrollarrow span:nth-child(1) { animation-delay: 0.7s; }
+.scrollarrow span:nth-child(2) { animation-delay: 1.4s; }
+
+@keyframes arrowAnimation {
+    0% { opacity: 0; }
+    50% { opacity: 1; }
+    100% { opacity: 0; }
+}

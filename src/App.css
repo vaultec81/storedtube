@@ -21,7 +21,7 @@
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
-  color: white;
+  color: #E6E6E6;
 }
 
 .App-link {
@@ -35,4 +35,25 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+
+.showcase-img {
+  width: 80%;
+}
+
+.showcase-box {
+  padding: 2%;
+  max-width: 80%;
+  /*margin-top: 20vh;*/
+  display: flex;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.showcase-downslide {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-end;
+  justify-content: center;
 }
