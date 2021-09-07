@@ -1,8 +1,10 @@
 import React from 'react'
 
 export default function ShowcaseImg(props) {
-    const {src} = props;
-    return <a href={src} target="_blank" rel="noreferrer">
+    const { src } = props;
+    return (/*<a href={src} target="_blank" rel="noreferrer">
         <img className="showcase-img" src={src} alt="" />
-    </a>
+        </a>*/
+    <img className="showcase-img" src={src} alt="" />)
+
 }

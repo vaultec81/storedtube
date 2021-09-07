@@ -60,6 +60,7 @@ class Core {
         await this.avalonPayments.start();
         await this.ipfsHandler.start();
         app.post('/api/ipfs/store_dtube', this.purchaseStorageDtube);
+        app.get('/api/ipfs/get_invoice', this.avalonPayments.getInvoice);
     }
 }
 ; (async () => {

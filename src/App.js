@@ -2,6 +2,8 @@ import logo from './logo.svg';
 import './App.css';
 import './Arrow.css'
 
+import { useState, useCallback } from 'react'
+
 import Accordion from '@material-ui/core/Accordion';
 import AccordionSummary from '@material-ui/core/AccordionSummary';
 import AccordionDetails from '@material-ui/core/AccordionDetails';
@@ -19,6 +21,8 @@ import ReactFullpage from '@fullpage/react-fullpage'; // will return static vers
 import { LoopCircleLoading } from 'react-loadingg';
 import ReactLoading from "react-loading";
 
+import ImageViewer from "react-simple-image-viewer";
+
 import DTubeLogo from './Logo_White.svg';
 import Backdrop from './backdrop.png';
 import Backdrop2 from './backdrop2.png';
@@ -28,6 +32,7 @@ import preview_modal from './preview_modal.png';
 import ShowcaseImg from './components/ShowcaseImg'
 import AddForm from './AddForm'
 import { Box } from '@material-ui/core';
+import { useDtubeStore } from './hooks/dtubeStore'
 
 import {
   HashRouter as Router,
@@ -51,21 +56,59 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     flexDirection: 'column'
   },
+  highlightText: {
+    backgroundColor: 'rgb(255 0 0 / 20%)'
+  },
+  modalBox: {
+    padding: '5px', textAlign: 'center', width: '100%'
+  }
 }));
 
 function App() {
   const classes = useStyles();
   console.log(Backdrop)
+  const [currentImage, setCurrentImage] = useState(0);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const images = [
+    "http://placeimg.com/1200/800/nature",
+  ];
+  const openImageViewer = useCallback((index) => {
+    setCurrentImage(index);
+    setIsViewerOpen(true);
+  }, []);
+
+  const closeImageViewer = () => {
+    setCurrentImage(0);
+    setIsViewerOpen(false);
+  };
+  const { invoice, invoiceId, statusMessage, purchase, exit } = useDtubeStore();
+  console.log(isViewerOpen)
+
+  console.log(invoiceId)
+  console.log(invoice)
   return (
     <div className="App">
       <Router>
         <Switch>
-          <Route exact path="/">
+          <Route path="/">
+            {isViewerOpen && (
+              <ImageViewer
+                customControls={[]}
+                src={images}
+                currentIndex={currentImage}
+                onClose={closeImageViewer}
+                disableScroll={false}
+                closeOnClickOutside={true}
+                backgroundStyle={{
+                  backgroundColor: "rgba(0,0,0,0.9)"
+                }}
+              />
+            )}
             <ReactFullpage
               //fullpage options
               licenseKey={'YOUR_KEY_HERE'}
               scrollingSpeed={1000} /* Options here */
-              navigation={true}
+              navigation={!isViewerOpen}
               render={({ state, fullpageApi }) => {
                 return <ReactFullpage.Wrapper>
                   <div className="section">
@@ -80,11 +123,13 @@ function App() {
                       <p style={{ marginBottom: '0px' }}>
                         Store your dtube videos. Long term.
                       </p>
-                      <h2>
+                      {/*<h2>
                         Coming Soon
-                      </h2>
+                      </h2>*/}
+                      <AddForm onSubmit={purchase} />
                       <Modal
-                        open={true}
+                        onClose={() => exit()}
+                        open={!!invoiceId}
                       >
 
                         <Paper className={classes.paper}>
@@ -93,34 +138,51 @@ function App() {
                             <Box style={{ padding: '5px', textAlign: 'center', display: 'flex', alignItems: 'center' }}>
                               <Box>
                                 <Box style={{ display: 'flex', justifyContent: 'center' }}>
-                                  <ReactLoading type={'spin'} color="red" />
-                                  {/*<CheckCircleIcon style={{color: 'green', height: '64px', width: '64px'}}/>*/}
-                                </Box>
-                                Remaining: 1DTC
-                                Pending: 0DTC
+                                  {
+                                    invoice.status === "pending" || !invoice.status ?
+                                      <ReactLoading type={'spin'} color="red" /> :
+                                      <CheckCircleIcon style={{ color: 'green', height: '64px', width: '64px' }} />
 
+                                  }
+                                </Box>
+                                {invoice.status === "pending" ? <>
+                                  Required: {invoice.balReq / 100} DTC
+                                  Pending: {invoice.bal / 100} DTC
+                                </> : null}
+                                {statusMessage}
                               </Box>
                             </Box>
-                            <Box style={{ padding: '5px', textAlign: 'center' }}>
-                              <h3>
-                                Send 1 DTC to
+                            {
+                              invoice.status === "pending" ?
+                                <Box className={classes.modalBox}>
+                                  <h3>
+                                    Send {invoice.balReq / 100} DTC to
 
-                              </h3>
-                              <code style={{ backgroundColor: 'rgb(255 0 0 / 20%)' }}>
-                                <a href="https://d.tube/#/c/vaultec" target="_blank" rel="noreferrer">vaultec</a>
-                              </code>
-                              <h3>
-                                with memo:
-                              </h3>
+                                  </h3>
+                                  <code className={classes.highlightText}>
+                                    <a href="https://d.tube/#/c/vaultec" target="_blank" rel="noreferrer">vaultec</a>
+                                  </code>
+                                  <h3>
+                                    with memo:
+                                  </h3>
 
-                              <code style={{ backgroundColor: 'rgb(255 0 0 / 20%)' }}>
-                                332a5ecc-3101-4545-b98a-159ccfe68e8d
-                              </code>
+                                  <code className={classes.highlightText}>
+                                    {invoiceId}
+                                  </code>
 
-                            </Box>
+                                </Box> : <Box className={classes.modalBox} style={{ wordBreak: 'break-word' }}>
+
+                                  url: <br /> <code className={classes.highlightText}>
+                                    {invoice?.args?.link}
+                                  </code>
+                                  <br />
+                                  <br />
+                                  TotalSize: {invoice?.args?.totalSize} Bytes
+                                </Box>
+                            }
                           </Box>
                           <Box>
-                            <a href="https://discord.gg/UwMkwRQ">
+                            <a href="https://discord.gg/UwMkwRQ" target="_blank" rel="noreferrer">
                               Need help? Join Our Discord!
                             </a>
                           </Box>
@@ -147,7 +209,9 @@ function App() {
                             <h2>
                               1. Copy and Paste your video url into the app.
                             </h2>
-                            <ShowcaseImg src={Backdrop} />
+                            <div onClick={() => openImageViewer(0)}>
+                              <ShowcaseImg src={Backdrop} />
+                            </div>
                           </div>
                         </div>
                         <div className="showcase-box" style={{ width: '50%' }}>
@@ -251,7 +315,7 @@ function App() {
               }} />
           </Route>
           <Route exact path="/dev">
-              <AddForm/>
+            <AddForm />
           </Route>
         </Switch>
       </Router>

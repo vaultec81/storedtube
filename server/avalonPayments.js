@@ -42,10 +42,10 @@ class ServerTracker {
         this.self = self;
         this.regOps = {};
         this.trxQuery = this.trxQuery.bind(this)
+        this.getInvoice = this.getInvoice.bind(this)
     }
     registerOpt(name, cb) {
         this.regOps[name] = cb;
-        console.log(this.regOps)
     }
     async trxQuery() {
         const data = await javalon.getAccountHistory(HANDLE_ACCOUNT, 0);
@@ -69,19 +69,21 @@ class ServerTracker {
                         //Check whether transaction is already tracked or not.
                         if (!invoice.trxs.includes(trx.hash)) {
                             invoice.trxs.push(trx.hash)
-
                             //Add balance to invoice data
                             invoice.bal = invoice.bal + trx.data.amount;
                         }
-                        if (invoice.bal <= invoice.balReq && invoice.status === INVOICE_STATUS.PENDING) {
+                        if (invoice.bal >= invoice.balReq && invoice.status === INVOICE_STATUS.PENDING) {
                             console.log('rocket mom')
                             //Mark as paid.
                             invoice.status = INVOICE_STATUS.PAID
                         }
+                        console.log(invoice)
                         if(invoice.status === INVOICE_STATUS.PAID) {
                             try {
                                 //Execute operation upon paying for invoice.
+                                console.log(this.regOps[invoice.op])
                                 const output = await this.regOps[invoice.op](invoice.args)
+                                console.log(output)
                                 if (output) {
                                     invoice.out = output;
                                 }
@@ -110,15 +112,36 @@ class ServerTracker {
             memo: id,
             _id: id,
             bal: 0,
-            balReq: 1,
+            balReq: 100,
             trxs: [],
             args,
             out: null,
+            created: new Date(),
             status: INVOICE_STATUS.PENDING
         }
         await collection.insertOne(invoice_data)
 
         return id;
+    }
+    async getInvoice(req, res) {
+        const {memo_id} = req.query;
+        const collection = this.db.collection('invoices')
+        const invoice = await collection.findOne({
+            memo: memo_id
+        })
+        return res.send(invoice);
+    }
+    async cancelInvoice(req, res) {
+        const {memo_id} = req.query;
+        const collection = this.db.collection('invoices')
+        const invoice = await collection.findOneAndUpdate({
+            memo: memo_id
+        }, {
+            $set: {
+                status: 'canceled'
+            }
+        })
+        return res.send(invoice);
     }
     async start() {
         this.mongodbClient = new MongoClient(MONGODB_URL)
@@ -127,7 +150,7 @@ class ServerTracker {
 
         console.log(this.db)
 
-        setInterval(this.trxQuery, 5000)
+        setInterval(this.trxQuery, 20000)
     }
 }
 /*
